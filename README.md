@@ -61,7 +61,8 @@ DriveGuard/
 │   ├── haarcascade_*.xml   # OpenCV 预训练检测器
 │   ├── face_rec.yml        # 训练好的人脸识别模型
 │   └── label_to_name.txt   # 用户数据库 (ID:姓名:角色)
-└── build/                  # 编译输出目录
+├── build/                  # 编译构建目录
+└── bin/                    # 可执行文件输出目录
 ```
 
 ---
