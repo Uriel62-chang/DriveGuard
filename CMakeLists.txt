@@ -6,9 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找 OpenCV 包
-# 注意：在 Windows 下使用 MinGW 编译时，可能需要设置 OpenCV_DIR 环境变量
-# 或者在 cmake 命令中指定 -DOpenCV_DIR="path/to/opencv/build"
-# set(OpenCV_DIR "E:\\OpenCV4.10.0\\build_mingw")
+# 或自行指定路径：set(OpenCV_DIR "E:\\OpenCV4.10.0\\build_mingw")
 find_package(OpenCV 4.10.0 REQUIRED)
 
 # 收集源文件
