@@ -22,7 +22,7 @@ add_executable(DriveGuard ${SOURCES})
 
 # 包含头文件目录
 target_include_directories( DriveGuard PUBLIC 
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
 )
 
 # 链接 OpenCV 库
