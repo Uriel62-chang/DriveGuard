@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 查找 OpenCV 包
-# 或自行指定路径：set(OpenCV_DIR "E:\\OpenCV4.10.0\\build_mingw")
+# 若是自定义安装，需指定路径：set(OpenCV_DIR "path/to/build")
 find_package(OpenCV 4.10.0 REQUIRED)
 
 # 收集源文件
