@@ -1,7 +1,5 @@
 # DriveGuard - 智能驾驶员监控系统 (DMS)
 
-> **无人载具系统 & 智能感知 课程设计项目**
-
 DriveGuard 是一个基于计算机视觉的**驾驶员监控系统 (Driver Monitoring System)**。它不仅仅是一个人脸识别程序，更是一个集成了**身份认证**、**权限管理**和**疲劳监测**的完整车载安全解决方案原型。
 
 本项目旨在通过轻量级的算法（C++ & OpenCV），在无需昂贵硬件的情况下，实现对驾驶员状态的实时感知与分析。
@@ -92,7 +90,7 @@ mingw32-make
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essential cmake libopencv-dev # 建议直接编译OpenCV源码
+sudo apt-get install build-essential cmake libopencv-dev # 更建议下载并编译OpenCV源码
 ```
 
 然后进行编译：
@@ -143,6 +141,3 @@ make
 1. **算法升级**：将 Haar 检测器升级为深度学习模型 (如 YuNet, SSD)，提升侧脸和暗光下的检测稳定性。
 2. **活体检测**：增加红外或动作配合检测，防止照片欺骗。
 3. **嵌入式部署**：移植至 Jetson Nano 或树莓派，结合蜂鸣器硬件，打造真实的车载终端。
-
----
-*Course Project for Unmanned Vehicle Systems | 2025*
