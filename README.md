@@ -1,148 +1,112 @@
-# DriveGuard - 智能驾驶员监控系统 (DMS)
+# DriveGuard
 
-DriveGuard 是一个基于计算机视觉的**驾驶员监控系统 (Driver Monitoring System)**。它不仅仅是一个人脸识别程序，更是一个集成了**身份认证**、**权限管理**和**疲劳监测**的完整车载安全解决方案原型。
+基于 C++ / OpenCV 的驾驶员监控系统 (Driver Monitoring System, DMS),实现实时人脸身份识别与疲劳状态监测。
 
-本项目旨在通过轻量级的算法（C++ & OpenCV），在无需昂贵硬件的情况下，实现对驾驶员状态的实时感知与分析。
+## 特性
 
----
+- **人脸识别**:基于 SFace (ArcFace) 128 维特征与余弦相似度比对;特征库为向量集合,新增用户无需重训练
+- **疲劳监测**:基于 2d106det 关键点计算眼睛纵横比 (EAR),时间制状态机判定疲劳与睡眠,与帧率无关
+- **多角色权限**:驾驶员(启动疲劳监控)、乘客(仅识别)、陌生人(告警)
+- **现场录入**:运行时按 `R` 交互式注册新用户,特征实时入库,无需训练等待
 
-## ✨ 核心功能
+## 技术栈
 
-### 1. 👥 多用户身份识别与权限管理
-系统能够“认识”不同的人，并根据身份赋予不同的权限：
-- **驾驶员 (Driver)**：系统重点监控对象。识别成功后显示**绿色**边框，并启动疲劳监测逻辑。
-- **乘客 (Passenger)**：系统友好放行对象。识别成功后显示**蓝色**边框，不进行疲劳干扰。
-- **陌生人 (Unknown)**：未授权人员。显示**红色**边框并提示警告 (WARNING)，模拟禁止启动车辆。
+- C++17,CMake 3.10+
+- OpenCV 4.5.4+(Core / Objdetect / DNN,无需 Contrib)
 
-### 2. 😴 智能疲劳/分心监测
-针对驾驶员进行实时眼部状态分析，保障行车安全：
-- **关键点 EAR 检测**：基于 InsightFace 2d106det (106 点关键点) 计算眼睛纵横比 (EAR)，替代传统 Haar 眼睛检测，闭眼判定更准。
-- **实时状态机**：时间制状态机 (与帧率无关) 判断眼睛闭合的持续时间。
-- **分级预警**：
-    - **疲劳 (Fatigue)**：闭眼超过 1.5 秒，显示**黄色**警告。
-    - **睡眠 (Sleeping)**：闭眼超过 3 秒，显示**红色**严重报警 (DANGER)。
+## 模型
 
-### 3. 📝 交互式现场录入
-无需编写代码或手动处理文件，即可现场注册新用户：
-- **一键录入**：运行中按 `R` 键进入录入模式。
-- **向导式流程**：在控制台输入姓名、选择角色（驾驶员/乘客），跟随倒计时完成人脸采集。
-- **增量学习**：新用户的加入不会影响旧用户的数据，支持多人共存。
+| 模型 | 用途 | 来源 |
+|---|---|---|
+| `face_recognition_sface_2021dec.onnx` | 人脸特征提取 (128 维) | [OpenCV Zoo](https://github.com/opencv/opencv_zoo) |
+| `2d106det.onnx` | 106 点关键点,EAR 闭眼检测 | InsightFace |
+| `haarcascade_frontalface_default.xml` | 人脸检测 | OpenCV 预训练模型 |
 
----
+模型文件位于 `models/` 目录,运行前请确保存在。`face_rec.yml` 与 `label_to_name.txt` 为运行时生成的数据文件,无需手动维护。
 
-## 🛠 技术架构
+## 构建
 
-本项目采用**模块化**设计，遵循现代 C++ (C++17) 标准，结构清晰，易于扩展。
+### 依赖
 
-- **开发语言**: C++17 (利用 STL, Smart Pointers 管理内存)
-- **视觉库**: OpenCV 4.10.0 (Core, Objdetect, DNN 模块;无需 Contrib)
-- **构建工具**: CMake (跨平台支持 Windows/Linux)
-- **核心算法**:
-    - **检测**: Haar Cascade Classifiers (人脸检测)
-    - **识别**: SFace (ArcFace 128 维特征 + 余弦相似度比对,特征库为向量集合,新增用户无需重训练)
-    - **疲劳判定**: 2d106det 关键点 EAR + 时间制有限状态机 (FSM)
+- 支持 C++17 的编译器 (GCC / Clang / MSVC)
+- CMake 3.10+
+- OpenCV 4.5.4+(含 `objdetect` 与 `dnn` 模块)
 
-## 📂 项目结构
+### Linux / macOS
+
+```bash
+cmake -S . -B build
+cmake --build build -j$(nproc)
+```
+
+### Windows (MinGW)
+
+```bash
+cmake -G "MinGW Makefiles" -B build
+mingw32-make -C build
+```
+
+构建产物输出至 `bin/DriveGuard`。
+
+## 运行
+
+```bash
+./bin/DriveGuard                              # 默认摄像头 (设备 0)
+./bin/DriveGuard 1                            # 指定设备号
+./bin/DriveGuard video.mp4                    # 视频文件
+./bin/DriveGuard http://localhost:9000/video  # MJPEG 流 (如 Windows 推流 → WSL)
+```
+
+首次运行(无特征库)时,系统进入检测模式并提示注册用户。
+
+## 使用
+
+### 键盘控制
+
+| 按键 | 功能 |
+|---|---|
+| `R` | 进入用户录入模式 |
+| `Q` / `ESC` | 退出程序 |
+
+### 注册新用户
+
+1. 按 `R`,在控制台输入姓名(英文)并选择角色:`1` 驾驶员、`2` 乘客
+2. 注视摄像头,等待 5 秒倒计时
+3. 系统逐帧提取 30 个特征实时写入特征库(无需训练)
+4. 录入完成自动切换回识别模式,可立即验证识别效果
+
+## 配置
+
+| 参数 | 默认值 | 位置 |
+|---|---|---|
+| 人脸识别相似度阈值 | 0.363 | `FaceRecognizer::setThreshold`,低于视为陌生人 |
+| EAR 闭眼阈值 | 0.25 | `main.cpp`,低于视为闭眼 |
+| 疲劳判定时长 | 1.5 s | `DMSController.h` 中 `FATIGUE_SECONDS_` |
+| 睡眠判定时长 | 3.0 s | `DMSController.h` 中 `SLEEPING_SECONDS_` |
+| 录入样本数 | 30 | `main.cpp` 中 `RECORD_MAX_IMAGES` |
+
+## 项目结构
 
 ```text
 DriveGuard/
-├── CMakeLists.txt          # CMake 构建配置
-├── include/                # 头文件 (接口定义)
-│   ├── DMSController.h     # 疲劳监测控制器
-│   ├── FaceDetector.h      # 视觉检测模块
-│   ├── FaceLandmarkDetector.h # 关键点 EAR 闭眼检测
-│   └── FaceRecognizer.h    # 身份识别与特征库模块
-├── src/                    # 源代码 (核心逻辑)
-│   ├── DMSController.cpp   
-│   ├── FaceDetector.cpp    
+├── CMakeLists.txt                    # 构建配置
+├── include/                          # 公共头文件
+│   ├── DMSController.h               # 疲劳状态控制器
+│   ├── FaceDetector.h                # 人脸检测
+│   ├── FaceLandmarkDetector.h        # 关键点 EAR 闭眼检测
+│   └── FaceRecognizer.h              # SFace 人脸识别与特征库
+├── src/                              # 实现源码
+│   ├── DMSController.cpp
+│   ├── FaceDetector.cpp
 │   ├── FaceLandmarkDetector.cpp
-│   ├── FaceRecognizer.cpp  
-│   └── main.cpp            # 主程序与交互逻辑
-├── models/                 # 模型与数据存储
-│   ├── haarcascade_frontalface_default.xml # OpenCV 预训练人脸检测器
-│   ├── face_recognition_sface_2021dec.onnx # SFace 识别模型
-│   ├── 2d106det.onnx       # 106 点关键点模型 (EAR 闭眼检测)
-│   ├── face_rec.yml        # 人脸特征库 (128 维向量集合)
-│   └── label_to_name.txt   # 用户数据库 (ID:姓名:角色)
-├── build/                  # 编译构建目录
-└── bin/                    # 可执行文件输出目录
+│   ├── FaceRecognizer.cpp
+│   └── main.cpp                      # 主程序与交互逻辑
+├── models/                           # 模型与运行数据
+│   ├── haarcascade_frontalface_default.xml
+│   ├── face_recognition_sface_2021dec.onnx
+│   ├── 2d106det.onnx
+│   ├── face_rec.yml                  # 特征库(运行时生成)
+│   └── label_to_name.txt             # 用户映射(运行时生成)
+├── build/                            # 构建产物(已忽略)
+└── bin/                              # 可执行文件(已忽略)
 ```
-
----
-
-## 🚀 快速开始
-
-### 1. 环境准备
-确保你的电脑上安装了：
-- C++ 编译器 (MinGW GCC 或 Visual Studio)
-- CMake
-- OpenCV 4.5.4+ (主模块即可,需含 objdetect 与 dnn;无需 Contrib)
-
-### 2. 编译项目
-
-#### 🪟 Windows (MinGW)
-确保环境变量中已配置 MinGW 和 OpenCV。
-
-```bash
-mkdir build
-cd build
-cmake -G "MinGW Makefiles" ..
-mingw32-make
-```
-
-#### 🐧 Linux (Ubuntu/Debian/Raspberry Pi)
-首先安装必要的构建工具和 OpenCV 开发包：
-
-```bash
-sudo apt-get update
-sudo apt-get install build-essential cmake libopencv-dev # 更建议下载并编译OpenCV源码
-```
-
-然后进行编译：
-
-```bash
-mkdir build
-cd build
-cmake ..
-make
-```
-
-### 3. 运行系统
-确保 `models` 目录下包含人脸级联器与两个 ONNX 模型 (SFace、2d106det)。
-
-**Windows:**
-```bash
-./DriveGuard.exe
-```
-
-**Linux:**
-```bash
-./DriveGuard
-```
-
----
-
-## 🎮 操作指南
-
-程序启动后，将自动开启摄像头并进入监控模式。
-
-### 键盘控制
-- **`Q` / `ESC`**: 退出程序。
-- **`R`**: 进入 **用户录入模式**。
-
-### 录入新用户流程
-1. 按下 **`R`** 键，视频画面将暂停。
-2. 看向**控制台 (Terminal/CMD)**，按照提示输入：
-    - 输入 **姓名** (英文，如 `Teacher_Li`)。
-    - 选择 **角色** (输入 `1` 设为驾驶员，输入 `2` 设为乘客)。
-3. 看向**摄像头**，等待 5 秒倒计时。
-4. 保持头部微动，系统将逐帧提取 30 个 128 维特征并实时写入特征库 (现录现存,无需训练)。
-5. 录入完成后，系统自动切换回识别模式，你可以立即测试识别效果。
-
----
-
-## 🔮 未来展望 (二次开发方向)
-本项目作为课设原型，已具备完整的业务闭环。若需进一步商业化或科研深化，可考虑：
-1. **算法升级**：将 Haar 检测器升级为深度学习模型 (如 YuNet, SSD)，提升侧脸和暗光下的检测稳定性。
-2. **活体检测**：增加红外或动作配合检测，防止照片欺骗。
-3. **嵌入式部署**：移植至 Jetson Nano 或树莓派，结合蜂鸣器硬件，打造真实的车载终端。
