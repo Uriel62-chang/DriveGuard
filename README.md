@@ -28,22 +28,15 @@
 
 ### 依赖
 
-- 支持 C++17 的编译器 (GCC / Clang / MSVC)
+- 支持 C++17 的编译器 (GCC / Clang)
 - CMake 3.10+
-- OpenCV 4.5.4+(含 `objdetect` 与 `dnn` 模块)
+- OpenCV 4.5.4+(含 `objdetect` 与 `dnn` 模块;Ubuntu 可通过 `libopencv-dev` 安装,注意发行版自带版本可能较旧,建议源码编译)
 
-### Linux / macOS
+### 编译
 
 ```bash
 cmake -S . -B build
 cmake --build build -j$(nproc)
-```
-
-### Windows (MinGW)
-
-```bash
-cmake -G "MinGW Makefiles" -B build
-mingw32-make -C build
 ```
 
 构建产物输出至 `bin/DriveGuard`。
@@ -54,7 +47,7 @@ mingw32-make -C build
 ./bin/DriveGuard                              # 默认摄像头 (设备 0)
 ./bin/DriveGuard 1                            # 指定设备号
 ./bin/DriveGuard video.mp4                    # 视频文件
-./bin/DriveGuard http://localhost:9000/video  # MJPEG 流 (如 Windows 推流 → WSL)
+./bin/DriveGuard http://<host>:<port>/video   # MJPEG 流
 ```
 
 首次运行(无特征库)时,系统进入检测模式并提示注册用户。
