@@ -16,10 +16,11 @@ DriveGuard 是一个基于计算机视觉的**驾驶员监控系统 (Driver Moni
 
 ### 2. 😴 智能疲劳/分心监测
 针对驾驶员进行实时眼部状态分析，保障行车安全：
-- **实时状态机**：通过算法判断眼睛闭合的持续时间。
+- **关键点 EAR 检测**：基于 InsightFace 2d106det (106 点关键点) 计算眼睛纵横比 (EAR)，替代传统 Haar 眼睛检测，闭眼判定更准。
+- **实时状态机**：时间制状态机 (与帧率无关) 判断眼睛闭合的持续时间。
 - **分级预警**：
-    - **疲劳 (Fatigue)**：闭眼超过约 1.5 秒，显示**黄色**警告。
-    - **睡眠 (Sleeping)**：闭眼超过约 3 秒，显示**红色**严重报警 (DANGER)。
+    - **疲劳 (Fatigue)**：闭眼超过 1.5 秒，显示**黄色**警告。
+    - **睡眠 (Sleeping)**：闭眼超过 3 秒，显示**红色**严重报警 (DANGER)。
 
 ### 3. 📝 交互式现场录入
 无需编写代码或手动处理文件，即可现场注册新用户：
@@ -34,12 +35,12 @@ DriveGuard 是一个基于计算机视觉的**驾驶员监控系统 (Driver Moni
 本项目采用**模块化**设计，遵循现代 C++ (C++17) 标准，结构清晰，易于扩展。
 
 - **开发语言**: C++17 (利用 STL, Smart Pointers 管理内存)
-- **视觉库**: OpenCV 4.10.0 (Core, Objdetect, Face 模块)
+- **视觉库**: OpenCV 4.10.0 (Core, Objdetect, DNN 模块;无需 Contrib)
 - **构建工具**: CMake (跨平台支持 Windows/Linux)
 - **核心算法**:
-    - **检测**: Haar Cascade Classifiers (人脸与眼部检测)
-    - **识别**: LBPH (局部二值模式直方图) - 具有良好的抗光照干扰能力
-    - **决策**: 有限状态机 (FSM) - 处理疲劳判定的时序逻辑
+    - **检测**: Haar Cascade Classifiers (人脸检测)
+    - **识别**: SFace (ArcFace 128 维特征 + 余弦相似度比对,特征库为向量集合,新增用户无需重训练)
+    - **疲劳判定**: 2d106det 关键点 EAR + 时间制有限状态机 (FSM)
 
 ## 📂 项目结构
 
@@ -49,15 +50,19 @@ DriveGuard/
 ├── include/                # 头文件 (接口定义)
 │   ├── DMSController.h     # 疲劳监测控制器
 │   ├── FaceDetector.h      # 视觉检测模块
-│   └── FaceRecognizer.h    # 身份识别与数据库模块
+│   ├── FaceLandmarkDetector.h # 关键点 EAR 闭眼检测
+│   └── FaceRecognizer.h    # 身份识别与特征库模块
 ├── src/                    # 源代码 (核心逻辑)
 │   ├── DMSController.cpp   
 │   ├── FaceDetector.cpp    
+│   ├── FaceLandmarkDetector.cpp
 │   ├── FaceRecognizer.cpp  
 │   └── main.cpp            # 主程序与交互逻辑
 ├── models/                 # 模型与数据存储
-│   ├── haarcascade_*.xml   # OpenCV 预训练检测器
-│   ├── face_rec.yml        # 训练好的人脸识别模型
+│   ├── haarcascade_frontalface_default.xml # OpenCV 预训练人脸检测器
+│   ├── face_recognition_sface_2021dec.onnx # SFace 识别模型
+│   ├── 2d106det.onnx       # 106 点关键点模型 (EAR 闭眼检测)
+│   ├── face_rec.yml        # 人脸特征库 (128 维向量集合)
 │   └── label_to_name.txt   # 用户数据库 (ID:姓名:角色)
 ├── build/                  # 编译构建目录
 └── bin/                    # 可执行文件输出目录
@@ -71,7 +76,7 @@ DriveGuard/
 确保你的电脑上安装了：
 - C++ 编译器 (MinGW GCC 或 Visual Studio)
 - CMake
-- OpenCV 4.x (包含 Contrib 模块以支持 Face 功能)
+- OpenCV 4.5.4+ (主模块即可,需含 objdetect 与 dnn;无需 Contrib)
 
 ### 2. 编译项目
 
@@ -103,7 +108,7 @@ make
 ```
 
 ### 3. 运行系统
-确保 `models` 目录下包含必要的 `.xml` 文件。
+确保 `models` 目录下包含人脸级联器与两个 ONNX 模型 (SFace、2d106det)。
 
 **Windows:**
 ```bash
@@ -131,7 +136,7 @@ make
     - 输入 **姓名** (英文，如 `Teacher_Li`)。
     - 选择 **角色** (输入 `1` 设为驾驶员，输入 `2` 设为乘客)。
 3. 看向**摄像头**，等待 5 秒倒计时。
-4. 保持头部微动，系统将自动采集 30 张样本并完成训练。
+4. 保持头部微动，系统将逐帧提取 30 个 128 维特征并实时写入特征库 (现录现存,无需训练)。
 5. 录入完成后，系统自动切换回识别模式，你可以立即测试识别效果。
 
 ---

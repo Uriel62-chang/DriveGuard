@@ -1,1 +1,5 @@
 presentation(don't push)/
+build/
+bin/
+models/face_rec.yml
+models/label_to_name.txt

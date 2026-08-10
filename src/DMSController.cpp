@@ -3,7 +3,6 @@
 namespace DriveGuard {
     // 构造函数
     DMSController::DMSController() {
-        NoEyesCount_ = 0;
         currentState_ = DriverState::NORMAL;
     }
 
@@ -14,21 +13,23 @@ namespace DriveGuard {
 
     /**
      * @brief 更新驾驶员状态
-     * @param getsEyes 是否检测到眼睛
-     * @param fps 当前帧率（用于计算时间）
+     * @param eyesOpen 眼睛是否睁开
      */
-    void DMSController::update(bool getsEyes, double fps) {
-        // 如果检测到眼睛，重置状态
-        if (getsEyes) {
-            NoEyesCount_ = 0;
+    void DMSController::update(bool eyesOpen) {
+        auto now = std::chrono::steady_clock::now();
+        // 睁眼:重置闭眼计时,恢复正常
+        if (eyesOpen) {
+            closedSince_.reset();
             currentState_ = DriverState::NORMAL;
         }
-        // 如果未检测到眼睛，判断当前状态
+        // 闭眼:按累计闭眼时长判定状态(时间制,与帧率无关)
         else {
-            NoEyesCount_++;
-            if (NoEyesCount_ >= SLEEPING_THRESHOLD_) {
+            if (!closedSince_.has_value())
+                closedSince_ = now;
+            double seconds = std::chrono::duration<double>(now - *closedSince_).count();
+            if (seconds >= SLEEPING_SECONDS_) {
                 currentState_ = DriverState::SLEEPING;
-            } else if (NoEyesCount_ >= FATIGUE_THRESHOLD_) {
+            } else if (seconds >= FATIGUE_SECONDS_) {
                 currentState_ = DriverState::FATIGUE;
             }
         }

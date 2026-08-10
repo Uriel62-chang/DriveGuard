@@ -16,10 +16,9 @@ namespace DriveGuard {
     public:
         /**
          * @brief 构造函数
-         * @param faceModelPath 人脸识别模型的路径
-         * @param eyeModelPath 眼睛识别模型的路径
+         * @param modelPath 人脸级联器模型路径
          */
-        explicit FaceDetector(const std::string& modelPath, const std::string& eyeModelPath);
+        explicit FaceDetector(const std::string& modelPath);
 
         /**
          * @brief 析构函数
@@ -39,18 +38,8 @@ namespace DriveGuard {
          */
         std::vector<cv::Rect> detect(const cv::Mat& frame);
 
-        /**
-         * @brief 在给定的人脸区域中检测眼睛
-         * @param faceROI 人脸区域矩形框
-         * @return 检测到的眼睛矩形框列表
-         */
-        std::vector<cv::Rect> detectEyes(const cv::Mat& faceROI);
-
     private:
-        // 使用智能指针虽然对于cv::CascadeClassifier不是必须的（它自己管理内存），
-        // 但这里为了演示现代C++内存管理风格而使用
         std::unique_ptr<cv::CascadeClassifier> classifier_;
-        std::unique_ptr<cv::CascadeClassifier> eyeClassifier_;
         bool isLoaded_;
         double scaleFactor_;
         int minNeighbors_;
@@ -59,4 +48,3 @@ namespace DriveGuard {
 } // namespace DriveGuard
 
 #endif // FACE_DETECTOR_H
-
